@@ -10,12 +10,7 @@
         "appVariant": "PAB",
         "latestVersion": "90.10.06",
         "downloadUrl": "https://www.dropbox.com/scl/fi/awj3shrx5xb1awuv7887k/FLUXTUBE-v80.20.12-LAB-Installer.exe?rlkey=9erl7vwm0w9ecep0etiqgvolf&st=sstf2dpi&dl=1",
-        "releaseNotes": [
-            "Introduced deep-level bypass protocols for Extension CSPs.",
-            "Added futuristic zero-latency update overlay UI.",
-            "Optimized memory caching via Stealth DB architecture.",
-            "Enhanced dynamic UI resolution scaling."
-        ]
+        "updateSize": "141.8 MB"
     }
     </script>
     <style>
@@ -60,7 +55,7 @@
             overflow: hidden;
         }
 
-        /* Fast Smooth Embers Background for PAB (Futuristic Purple Edition) */
+        /* Fast Smooth Embers Background for PAB */
         .bg-animation {
             position: absolute;
             top: 0; left: 0;
@@ -197,12 +192,11 @@
             box-shadow: 0 8px 25px rgba(0, 210, 211, 0.4);
         }
 
-        /* Loading State Styles */
         .btn-download.is-loading {
             pointer-events: none;
             opacity: 0.85;
             cursor: wait;
-            background: linear-gradient(45deg, #2c3e50, #2c3e50); /* Darken bg on loading */
+            background: linear-gradient(45deg, #2c3e50, #2c3e50); 
             box-shadow: none;
             transform: none;
         }
@@ -226,39 +220,36 @@
             to { transform: rotate(360deg); }
         }
 
-        .notes-container {
+        .info-container {
             margin-top: 25px;
-            text-align: left;
+            text-align: center;
             background: rgba(0,0,0,0.5);
-            padding: 15px;
+            padding: 20px 15px;
             border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.05);
             -webkit-app-region: no-drag;
-            height: 110px;
-            overflow-y: auto;
         }
 
-        .notes-container::-webkit-scrollbar { width: 5px; }
-        .notes-container::-webkit-scrollbar-thumb { background: rgba(155,89,182,0.4); border-radius: 3px; }
-
-        .notes-container h3 {
+        .info-container h3 {
             margin: 0 0 10px 0;
-            font-size: 13px;
-            color: #fff;
+            font-size: 12px;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-bottom: 1px solid rgba(155,89,182,0.3);
-            padding-bottom: 8px;
         }
 
-        ul { margin: 0; color: #ccc; line-height: 1.6; font-size: 12px; padding-left: 20px; }
-        li { margin-bottom: 5px; }
+        .size-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 210, 211, 0.3); 
+        }
 
-        /* VIDU Creator Mark - PAB Style */
         .creator-mark {
             position: absolute;
             bottom: 15px;
-            right: 35px; /* Shifted left for spacing */
+            right: 35px;
             font-size: 13px;
             font-weight: 800;
             letter-spacing: 3px;
@@ -280,7 +271,6 @@
 
         @keyframes typingScan {
             0%, 20% { width: 0; filter: hue-rotate(0deg); }
-            /* Increased width from 110px to 140px to prevent truncation of the 'U' */
             40%, 80% { width: 140px; filter: hue-rotate(90deg); text-shadow: 0 0 10px var(--accent); }
             100% { width: 0; filter: hue-rotate(0deg); }
         }
@@ -312,9 +302,9 @@
                 <span class="btn-text">DOWNLOAD UPDATE</span>
             </a>
 
-            <div class="notes-container">
-                <h3>Release Notes</h3>
-                <ul id="display-notes"></ul>
+            <div class="info-container">
+                <h3>Update Size</h3>
+                <div class="size-display" id="display-size">-- MB</div>
             </div>
         </div>
 
@@ -325,23 +315,16 @@
         document.addEventListener("DOMContentLoaded", () => {
             const configBlock = document.getElementById('fluxtube-update-config').textContent;
             
-            // UI Logic for Download Button
             const downloadBtn = document.getElementById('download-btn');
             const btnText = downloadBtn.querySelector('.btn-text');
 
             downloadBtn.addEventListener('click', (e) => {
-                // Prevent double clicks
                 if (downloadBtn.classList.contains('is-loading')) {
                     e.preventDefault();
                     return;
                 }
-
-                // Activate loading state visual (Download still proceeds via href)
                 downloadBtn.classList.add('is-loading');
                 btnText.innerText = "INITIALIZING...";
-                
-                // Optional: Console log for debugging
-                console.log("Update sequence initialized.");
             });
 
             try {
@@ -349,12 +332,7 @@
                 document.getElementById('display-version').innerText = `Version ${data.latestVersion}`;
                 document.getElementById('download-btn').href = data.downloadUrl || data.downloadLink || "#";
                 
-                const notesList = document.getElementById('display-notes');
-                data.releaseNotes.forEach(note => {
-                    const li = document.createElement('li');
-                    li.innerText = note;
-                    notesList.appendChild(li);
-                });
+                document.getElementById('display-size').innerText = data.updateSize || "Unknown";
             } catch(e) {
                 console.error("Config Parsing Error", e);
             }
