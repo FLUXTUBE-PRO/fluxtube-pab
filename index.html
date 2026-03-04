@@ -21,6 +21,20 @@
     </script>
     <style>
         :root {
+            /* --- 3D PARALLAX CONFIGURATION --- */
+            --perspective: 1000px;
+            --tilt-margin-x: 50px; 
+            --tilt-margin-y: 50px; 
+
+            /* --- DEPTH LAYERS --- */
+            --z-bg: -10px;
+            --z-content: 35px;
+            --z-text: 15px;
+            --z-btn: 25px;
+            --z-btn-hover: 45px;
+            --z-mark: 50px;
+
+            /* --- COLORS --- */
             --bg-dark: #07070a;
             --accent: #9b59b6;
             --cyan: #00d2d3;
@@ -36,16 +50,30 @@
             background: transparent;
             color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* --- ANTI-BLUR TYPOGRAPHY FIXES --- */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             user-select: none;
+            perspective: var(--perspective);
+        }
+
+        /* --- DRAG HANDLE --- */
+        .drag-zone {
+            position: absolute; top: 0; left: 0; width: 100%; height: 35px;
+            -webkit-app-region: drag; z-index: 9999;
+            transform: translateZ(100px);
         }
 
         #container {
-            width: 100%;
-            height: 100%;
+            width: calc(100% - var(--tilt-margin-x)); 
+            height: calc(100% - var(--tilt-margin-y)); 
             background: var(--bg-dark);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
@@ -57,8 +85,10 @@
             padding: 30px;
             box-sizing: border-box;
             position: relative;
-            -webkit-app-region: drag;
-            overflow: hidden;
+            transform-style: preserve-3d;
+            transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+            transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            /* Removed will-change: transform; to prevent bitmap rasterization blurring */
         }
 
         /* Fast Smooth Embers Background for PAB (Futuristic Purple Edition) */
@@ -70,6 +100,7 @@
             margin: 0; padding: 0;
             z-index: 0;
             pointer-events: none;
+            border-radius: inherit;
         }
         .bg-animation li {
             position: absolute;
@@ -81,6 +112,7 @@
             box-shadow: 0 0 15px rgba(155, 89, 182, 0.4);
             animation: riseUp 4s linear infinite;
             bottom: -50px;
+            backface-visibility: hidden;
         }
         .bg-animation li:nth-child(1) { left: 10%; width: 40px; height: 40px; animation-duration: 3s; }
         .bg-animation li:nth-child(2) { left: 30%; width: 15px; height: 15px; animation-duration: 2.5s; animation-delay: 1s; }
@@ -90,8 +122,8 @@
         .bg-animation li:nth-child(6) { left: 20%; width: 20px; height: 20px; animation-duration: 3.2s; animation-delay: 1.5s; }
 
         @keyframes riseUp {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; }
-            100% { transform: translateY(-800px) rotate(360deg); opacity: 0; border-radius: 50%; }
+            0% { transform: translateY(0) rotate(0deg) translateZ(var(--z-bg)); opacity: 1; border-radius: 0; }
+            100% { transform: translateY(-800px) rotate(360deg) translateZ(var(--z-bg)); opacity: 0; border-radius: 50%; }
         }
 
         .glow-bg {
@@ -101,20 +133,27 @@
             background: radial-gradient(circle, rgba(155, 89, 182, 0.12) 0%, rgba(0,210,211,0.05) 40%, rgba(0,0,0,0) 70%);
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) translateZ(var(--z-bg));
             z-index: 0;
             pointer-events: none;
             animation: cyberSpin 10s linear infinite;
         }
 
         @keyframes cyberSpin {
-            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-            50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.05); }
-            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1); }
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1) translateZ(var(--z-bg)); }
+            50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.05) translateZ(var(--z-bg)); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1) translateZ(var(--z-bg)); }
+        }
+
+        /* --- UNBOUND, ALWAYS-VISIBLE CANVAS LAYER --- */
+        #nexus-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none; border-radius: inherit; opacity: 0.7;
+            transform: translateZ(var(--z-bg));
         }
 
         .content {
-            z-index: 1;
+            z-index: 2;
             text-align: center;
             width: 100%;
             max-width: 380px;
@@ -125,6 +164,9 @@
             backdrop-filter: blur(12px);
             box-sizing: border-box;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateZ(var(--z-content));
+            transform-style: preserve-3d;
+            backface-visibility: hidden; /* Fixes 3D blur */
         }
 
         h1 {
@@ -135,6 +177,8 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
+            transform: translateZ(var(--z-text));
+            backface-visibility: hidden;
         }
         
         .variant-subtitle {
@@ -144,6 +188,8 @@
             margin-bottom: 15px;
             text-transform: uppercase;
             text-shadow: 0 0 10px rgba(0, 210, 211, 0.4);
+            transform: translateZ(var(--z-text));
+            backface-visibility: hidden;
         }
 
         .version-badge {
@@ -157,6 +203,14 @@
             margin-bottom: 20px;
             border: 1px solid rgba(0, 210, 211, 0.3);
             box-shadow: 0 0 10px rgba(0, 210, 211, 0.15);
+            transform: translateZ(var(--z-text));
+            backface-visibility: hidden;
+        }
+
+        p {
+            transform: translateZ(var(--z-text));
+            pointer-events: none;
+            backface-visibility: hidden;
         }
 
         .btn-download {
@@ -181,6 +235,9 @@
             overflow: hidden;
             z-index: 1;
             cursor: pointer;
+            transform: translateZ(var(--z-btn));
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
         }
 
         .btn-download::before {
@@ -194,7 +251,7 @@
 
         .btn-download:hover::before { left: 100%; }
         .btn-download:hover {
-            transform: translateY(-2px);
+            transform: translateZ(var(--z-btn-hover)) translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 210, 211, 0.4);
         }
 
@@ -203,9 +260,9 @@
             pointer-events: none;
             opacity: 0.85;
             cursor: wait;
-            background: linear-gradient(45deg, #2c3e50, #2c3e50); /* Darken bg on loading */
+            background: linear-gradient(45deg, #2c3e50, #2c3e50);
             box-shadow: none;
-            transform: none;
+            transform: translateZ(var(--z-btn));
         }
 
         .spinner-icon {
@@ -237,6 +294,9 @@
             -webkit-app-region: no-drag;
             height: 110px;
             overflow-y: auto;
+            transform: translateZ(10px);
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
         }
 
         .notes-container::-webkit-scrollbar { width: 5px; }
@@ -250,16 +310,18 @@
             letter-spacing: 1px;
             border-bottom: 1px solid rgba(155,89,182,0.3);
             padding-bottom: 8px;
+            transform: translateZ(5px);
+            backface-visibility: hidden;
         }
 
         ul { margin: 0; color: #ccc; line-height: 1.6; font-size: 12px; padding-left: 20px; }
-        li { margin-bottom: 5px; }
+        li { margin-bottom: 5px; transform: translateZ(5px); backface-visibility: hidden; }
 
-        /* VIDU Creator Mark - PAB Style */
+        /* VIDU Creator Mark */
         .creator-mark {
             position: absolute;
             bottom: 15px;
-            right: 35px; /* Shifted left for spacing */
+            right: 35px;
             font-size: 13px;
             font-weight: 800;
             letter-spacing: 3px;
@@ -272,6 +334,8 @@
             animation: typingScan 4s steps(40, end) infinite, blinkCursor 0.5s step-end infinite alternate;
             -webkit-app-region: no-drag;
             pointer-events: none;
+            transform: translateZ(var(--z-mark));
+            backface-visibility: hidden;
         }
         .creator-mark::before {
             content: 'SYS.DEV: ';
@@ -281,7 +345,6 @@
 
         @keyframes typingScan {
             0%, 20% { width: 0; filter: hue-rotate(0deg); }
-            /* Increased width from 110px to 140px to prevent truncation of the 'U' */
             40%, 80% { width: 140px; filter: hue-rotate(90deg); text-shadow: 0 0 10px var(--accent); }
             100% { width: 0; filter: hue-rotate(0deg); }
         }
@@ -293,11 +356,14 @@
 <body>
 
     <div id="container">
+        <div class="drag-zone"></div>
         <ul class="bg-animation">
             <li></li><li></li><li></li><li></li><li></li><li></li>
         </ul>
 
         <div class="glow-bg"></div>
+        
+        <canvas id="nexus-canvas"></canvas>
 
         <div class="content">
             <h1>FLUXTUBE PRO</h1>
@@ -331,17 +397,12 @@
             const btnText = downloadBtn.querySelector('.btn-text');
 
             downloadBtn.addEventListener('click', (e) => {
-                // Prevent double clicks
                 if (downloadBtn.classList.contains('is-loading')) {
                     e.preventDefault();
                     return;
                 }
-
-                // Activate loading state visual (Download still proceeds via href)
                 downloadBtn.classList.add('is-loading');
                 btnText.innerText = "INITIALIZING...";
-                
-                // Optional: Console log for debugging
                 console.log("Update sequence initialized.");
             });
 
@@ -359,10 +420,129 @@
             } catch(e) {
                 console.error("Config Parsing Error", e);
             }
+            
+            // --- 3D MOUSE PARALLAX & PHYSICS CONFIGURATION ---
+            const TILT_SENSITIVITY = 15; 
+            const RETURN_SPEED = '0.5s'; 
+            const TRACK_SPEED = '0.1s'; 
+            const container = document.getElementById('container');
+
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / TILT_SENSITIVITY;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / TILT_SENSITIVITY;
+                
+                container.style.setProperty('--ry', `${-xAxis}deg`);
+                container.style.setProperty('--rx', `${yAxis}deg`);
+
+                const rect = container.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            });
+
+            document.addEventListener('mouseleave', () => {
+                container.style.transition = `transform ${RETURN_SPEED} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+                container.style.setProperty('--ry', `0deg`);
+                container.style.setProperty('--rx', `0deg`);
+                mouse.x = undefined; mouse.y = undefined;
+            });
+
+            document.addEventListener('mouseenter', () => {
+                container.style.transition = `transform ${TRACK_SPEED} cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+            });
+
+            // --- NEXUS CANVAS ENGINE (PAB: Purple/Cyan Theme) ---
+            const canvas = document.getElementById('nexus-canvas');
+            const ctx = canvas.getContext('2d');
+            let particlesArray = [];
+            const mouse = { x: undefined, y: undefined, radius: 140 };
+
+            function initNexus() {
+                particlesArray = [];
+                const numberOfParticles = 70; 
+                for (let i = 0; i < numberOfParticles; i++) {
+                    const size = (Math.random() * 2) + 1.5; 
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const directionX = (Math.random() * 1) - 0.5; 
+                    const directionY = (Math.random() * 1) - 0.5; 
+                    const color = Math.random() > 0.5 ? '#9b59b6' : '#00d2d3'; 
+                    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                }
+            }
+
+            class Particle {
+                constructor(x, y, directionX, directionY, size, color) {
+                    this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY;
+                    this.size = size; this.color = color; this.baseX = this.directionX; this.baseY = this.directionY;
+                }
+                draw() {
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.shadowBlur = 8; ctx.shadowColor = this.color; ctx.fillStyle = this.color; ctx.fill(); ctx.shadowBlur = 0; 
+                }
+                update() {
+                    const centerX = canvas.width / 2; const centerY = canvas.height / 2;
+                    this.baseX += (centerX - this.x) * 0.00001; this.baseY += (centerY - this.y) * 0.00001;
+
+                    if (this.x + this.size > canvas.width) { this.x = canvas.width - this.size; this.directionX = -Math.abs(this.directionX); this.baseX = -Math.abs(this.baseX); } 
+                    else if (this.x - this.size < 0) { this.x = this.size; this.directionX = Math.abs(this.directionX); this.baseX = Math.abs(this.baseX); }
+                    if (this.y + this.size > canvas.height) { this.y = canvas.height - this.size; this.directionY = -Math.abs(this.directionY); this.baseY = -Math.abs(this.baseY); } 
+                    else if (this.y - this.size < 0) { this.y = this.size; this.directionY = Math.abs(this.directionY); this.baseY = Math.abs(this.baseY); }
+
+                    if (mouse.x !== undefined) {
+                        const dx = mouse.x - this.x; const dy = mouse.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < mouse.radius) {
+                            const forceDirectionX = dx / distance; const forceDirectionY = dy / distance; const force = (mouse.radius - distance) / mouse.radius;
+                            this.directionX -= forceDirectionX * force * 1.8; this.directionY -= forceDirectionY * force * 1.8;
+                        }
+                    }
+
+                    this.directionX = this.directionX * 0.95 + this.baseX * 0.05; this.directionY = this.directionY * 0.95 + this.baseY * 0.05;
+                    const speed = Math.sqrt(this.directionX * this.directionX + this.directionY * this.directionY);
+                    if(speed > 5) { this.directionX = (this.directionX / speed) * 5; this.directionY = (this.directionY / speed) * 5; }
+                    this.x += this.directionX; this.y += this.directionY; this.draw();
+                }
+            }
+
+            function animateNexus() {
+                requestAnimationFrame(animateNexus); ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particlesArray.length; i++) { particlesArray[i].update(); }
+                connectNexus();
+            }
+
+            function connectNexus() {
+                const maxDist = 18000; 
+                for (let a = 0; a < particlesArray.length; a++) {
+                    for (let b = a; b < particlesArray.length; b++) {
+                        const dx = particlesArray[a].x - particlesArray[b].x; const dy = particlesArray[a].y - particlesArray[b].y; const distance = (dx * dx) + (dy * dy);
+                        if (distance < maxDist) {
+                            const opacityValue = 1 - (distance / maxDist);
+                            ctx.strokeStyle = particlesArray[a].color; ctx.globalAlpha = opacityValue * 0.8; ctx.lineWidth = 1.5;
+                            ctx.beginPath(); ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke();
+                        }
+                    }
+                    if (mouse.x !== undefined) {
+                        const mdx = particlesArray[a].x - mouse.x; const mdy = particlesArray[a].y - mouse.y; const mouseDist = (mdx * mdx) + (mdy * mdy);
+                        if(mouseDist < 30000) {
+                            const mouseOp = 1 - (mouseDist / 30000);
+                            ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = mouseOp; ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+                        }
+                    }
+                }
+                ctx.globalAlpha = 1.0; 
+            }
+
+            function startCanvasEngine() {
+                if (container.offsetWidth === 0) { requestAnimationFrame(startCanvasEngine); return; }
+                canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
+                initNexus(); animateNexus();
+            }
+            startCanvasEngine();
+
+            window.addEventListener('resize', () => {
+                if(container.offsetWidth > 0) { canvas.width = container.offsetWidth; canvas.height = container.offsetHeight; initNexus(); }
+            });
         });
     </script>
 </body>
 </html>
-
-
-
